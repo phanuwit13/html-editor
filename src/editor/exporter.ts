@@ -1,4 +1,4 @@
-import { findByTwId, TW_ATTR, applyPatch, type Patch, type StylePatch } from './patches'
+import { findByTwId, TW_ATTR, applyPatch, isRuntimePatch, targetKey, type Patch, type StylePatch } from './patches'
 import { OVERLAY_CSS_ID, serialize } from './prepareHtml'
 import { readableSelector } from './selector'
 import { SIDES, CORNERS } from './styleReader'
@@ -46,13 +46,14 @@ export function buildChangeList(preparedHtml: string, patches: Patch[]): ChangeI
 
   for (const p of patches) {
     if (consumed.has(p.id)) continue
-    const selector = selectorFor(p.twId)
+    const runtime = isRuntimePatch(p)
+    const selector = runtime ? (p.label ?? p.selector) : selectorFor(p.twId)
 
     if (p.kind === 'style') {
       const group = GROUPS.find((g) => g.props.includes(p.prop))
       if (group) {
         const members = group.props.map(
-          (prop) => patches.find((q) => q.kind === 'style' && q.twId === p.twId && q.prop === prop) as StylePatch | undefined,
+          (prop) => patches.find((q) => q.kind === 'style' && targetKey(q) === targetKey(p) && q.prop === prop) as StylePatch | undefined,
         )
         if (members.every(Boolean)) {
           members.forEach((m) => consumed.add(m!.id))
@@ -68,7 +69,8 @@ export function buildChangeList(preparedHtml: string, patches: Patch[]): ChangeI
     } else if (p.kind === 'text') {
       const b = p.html ? stripTags(p.before) : p.before
       const a = p.html ? stripTags(p.after) : p.after
-      items.push({ selector, change: `text: "${truncate(b)}" → "${truncate(a)}"` })
+      const note = runtime ? ' (rendered by script — change it in the JS source)' : ''
+      items.push({ selector, change: `text: "${truncate(b)}" → "${truncate(a)}"${note}` })
     } else if (p.kind === 'attr') {
       items.push({ selector, change: `attribute ${p.name}: ${JSON.stringify(p.before)} → ${JSON.stringify(p.after)}` })
     } else {
@@ -85,7 +87,21 @@ function formatDate(d: Date) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
-export function buildCommentBlock(items: ChangeItem[], date = new Date()): string {
+export const RUNTIME_STYLE_ID = 'tweaker-edits'
+
+/** CSS for edits on script-rendered elements, grouped by selector. */
+export function buildRuntimeCss(patches: Patch[]): string {
+  const rules = new Map<string, string[]>()
+  for (const p of patches) {
+    if (!isRuntimePatch(p) || p.kind !== 'style' || p.after === '') continue
+    const decls = rules.get(p.selector) ?? []
+    decls.push(`${p.prop}: ${p.after}${p.important ? ' !important' : ''};`)
+    rules.set(p.selector, decls)
+  }
+  return Array.from(rules, ([sel, decls]) => `  ${sel} {\n${decls.map((d) => `    ${d}`).join('\n')}\n  }`).join('\n')
+}
+
+export function buildCommentBlock(items: ChangeItem[], date = new Date(), hasRuntimeCss = false): string {
   const width = Math.min(40, Math.max(0, ...items.map((i) => i.selector.length)) + 0)
   const lines = items.map((it, i) => `  ${`${i + 1}.`.padEnd(4)}${it.selector.padEnd(width)}  ${it.change}`)
   return [
@@ -95,6 +111,12 @@ export function buildCommentBlock(items: ChangeItem[], date = new Date()): strin
     '  Edits were applied as inline styles. Please migrate them into the',
     '  proper classes / stylesheet (e.g. Tailwind utilities) and remove the',
     '  inline styles. Keep the resulting visual identical.',
+    ...(hasRuntimeCss
+      ? [
+          `  Elements rendered by JavaScript were styled via <style id="${RUNTIME_STYLE_ID}">`,
+          '  (structural selectors). Move those styles into the components that render them.',
+        ]
+      : []),
     '',
     ...(lines.length ? lines.map(safeComment) : ['  (no changes)']),
     '  ================================',
@@ -114,13 +136,20 @@ export function buildPrompt(items: ChangeItem[]): string {
 /** original (prepared) HTML + patches → clean HTML with a comment block on top. Never reads the live DOM. */
 export function exportHtml(preparedHtml: string, patches: Patch[], isFragment: boolean): string {
   const doc = new DOMParser().parseFromString(preparedHtml, 'text/html')
-  for (const p of patches) applyPatch(doc, p)
+  for (const p of patches) if (!isRuntimePatch(p)) applyPatch(doc, p)
 
   doc.getElementById(OVERLAY_CSS_ID)?.remove()
   doc.querySelectorAll('[id^="__tw_"]').forEach((el) => el.remove())
   doc.querySelectorAll(`[${TW_ATTR}]`).forEach((el) => el.removeAttribute(TW_ATTR))
 
-  const comment = buildCommentBlock(buildChangeList(preparedHtml, patches))
+  const css = buildRuntimeCss(patches)
+  if (css) {
+    const style = doc.createElement('style')
+    style.id = RUNTIME_STYLE_ID
+    style.textContent = `\n  /* HTML Tweaker: edits on elements rendered by JavaScript */\n${css}\n`
+    doc.head.appendChild(style)
+  }
+  const comment = buildCommentBlock(buildChangeList(preparedHtml, patches), new Date(), !!css)
 
   if (isFragment) {
     const head = Array.from(doc.head.children).map((el) => el.outerHTML).join('\n')

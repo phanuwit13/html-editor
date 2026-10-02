@@ -18,7 +18,9 @@ Sample files to try are in `fixtures/`.
 ## How it works
 
 - **Original + patches.** The original HTML is kept as a string. Every edit is recorded as a patch. The canvas edits the live DOM only as a preview. Export re-parses the original, applies the patches, strips the editor markers, and adds a `MANUAL DESIGN EDITS` comment block. Whatever the page's scripts changed during Play mode never ends up in the export.
-- **Element identity.** Before the page loads, every element in `<body>` gets `data-tw-id="tw-N"`. Elements the page's scripts create at runtime have no id. You can select them, but you can't edit them.
+- **Element identity.** Before the page loads, every element in `<body>` gets `data-tw-id="tw-N"`. Edits on those elements are written back into the file as inline styles.
+- **Script-rendered elements** (React/Preact/SPA prototypes where `<body>` is just `<div id="root">`). These elements have no id. Style edits become CSS rules on a short unique selector (e.g. `.ahero__info > h1.t-hero`). The rules live in a stylesheet, so they survive re-renders, and they are exported in `<style id="tweaker-edits">`. Text edits only show in the preview and the change list, because the text lives in the JavaScript. Delete hides the element with `display: none`.
+- **Hash routing.** A small preview-only shim lets `history.pushState/replaceState('#/route')` work inside the `srcdoc` iframe. The shim is stripped on export.
 - **Edits are inline styles.** The comment block and "Copy change list" ask your AI tool to move them into proper classes (e.g. Tailwind).
 
 ## Security note

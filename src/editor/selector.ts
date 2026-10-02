@@ -53,10 +53,22 @@ export function shortLabel(el: Element): string {
   return c ? `${tag}.${c}` : tag
 }
 
+/** Classes that flip with UI state — never anchor a rule on them. */
+const STATE_CLASS = /^(is-|has-)|(^|[-_])(active|open|opened|selected|current|checked|show|shown|hidden|visible|disabled|focus|hover|expanded|collapsed|loading)$/
+
+const isUnique = (doc: Document, sel: string, el: Element) => {
+  try {
+    const found = doc.querySelectorAll(sel)
+    return found.length === 1 && found[0] === el
+  } catch {
+    return false
+  }
+}
+
 /**
- * Unique, structural selector for an element the page's script rendered (no data-tw-id),
- * e.g. `#root > div:nth-child(2) > main > h1`. Anchored on the nearest ancestor with a unique id.
- * Classes are left out on purpose: SPA state toggles them (active, open…), structure is steadier.
+ * Shortest unique selector for an element the page's script rendered (no data-tw-id),
+ * e.g. `.ahero__info > h1.t-hero`. Built from stable component classes (no utility/state classes),
+ * adding `:nth-child()` only where siblings are ambiguous; stops as soon as it is unique.
  */
 export function runtimeSelector(el: Element): string {
   const doc = el.ownerDocument
@@ -72,10 +84,14 @@ export function runtimeSelector(el: Element): string {
       parts.unshift('body')
       break
     }
+    const classes = Array.from(cur.classList).filter((c) => isReadableClass(c) && !UTILITY.test(c) && !STATE_CLASS.test(c))
+    let part = tag + classes.slice(0, 2).map((c) => `.${CSS.escape(c)}`).join('')
     const parent: Element | null = cur.parentElement
-    const siblings = parent ? Array.from(parent.children) : []
-    const sameTag = siblings.filter((c) => c.tagName === cur!.tagName)
-    parts.unshift(sameTag.length > 1 ? `${tag}:nth-child(${siblings.indexOf(cur) + 1})` : tag)
+    if (parent && Array.from(parent.children).filter((c) => c !== cur && c.matches(part)).length > 0) {
+      part += `:nth-child(${Array.from(parent.children).indexOf(cur) + 1})`
+    }
+    parts.unshift(part)
+    if (isUnique(doc, parts.join(' > '), el)) return parts.join(' > ')
     cur = parent
   }
   return parts.join(' > ')
