@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard</title>
+  <style>
+    :root {
+      --primary: rgb(37, 99, 235);
+      --bg: rgb(243, 244, 246);
+      --surface: rgb(255, 255, 255);
+      --text: rgb(31, 41, 55);
+      --muted: rgba(31, 41, 55, 0.6);
+      --radius: 0.5rem;
+      --header-h: 3.5rem;
+      --sidebar-w: 14rem;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); font-size: 1rem; }
+    .header {
+      position: fixed; top: 0; left: 0; right: 0; height: var(--header-h);
+      background: var(--primary); color: rgb(255, 255, 255);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 1.5rem; z-index: 10; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    }
+    .header h1 { font-size: 1.25rem; margin: 0; }
+    .sidebar {
+      position: absolute; top: var(--header-h); left: 0; width: var(--sidebar-w);
+      min-height: 100%; background: var(--surface); padding: 1.5rem 1rem;
+      border-right: 1px solid rgba(0, 0, 0, 0.08);
+    }
+    .sidebar ul { list-style: none; margin: 0; padding: 0; }
+    .sidebar li { padding: 0.625rem 0.75rem; border-radius: var(--radius); margin-bottom: 0.25rem; cursor: pointer; }
+    .sidebar li.active { background: rgba(37, 99, 235, 0.1); color: var(--primary); font-weight: bold; }
+    .main { margin-left: var(--sidebar-w); padding: calc(var(--header-h) + 1.5rem) 1.5rem 3rem; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1.25rem; margin-bottom: 2rem; }
+    .card { background: var(--surface); border-radius: var(--radius); padding: 1.25rem; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
+    .card h3 { margin: 0 0 0.5rem; font-size: 0.875rem; color: var(--muted); text-transform: uppercase; }
+    .card .value { font-size: 2rem; font-weight: bold; }
+    .badge { display: inline-block; padding: 0.125rem 0.5rem; border-radius: 999px; font-size: 0.75rem; color: rgb(255, 255, 255); background: #22c55e; }
+    .badge { background: #ef4444 !important; }
+    .badge.ok { background: rgb(34, 197, 94); }
+    table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: var(--radius); overflow: hidden; }
+    th, td { text-align: left; padding: 0.75rem 1rem; border-bottom: 1px solid rgba(0, 0, 0, 0.06); }
+    th { background: rgb(249, 250, 251); font-size: 0.8125rem; text-transform: uppercase; color: var(--muted); }
+    .section-title { font-size: 1.25rem; margin: 2rem 0 1rem; }
+    .filler { height: 40rem; background: repeating-linear-gradient(45deg, rgba(37,99,235,.05), rgba(37,99,235,.05) 1rem, transparent 1rem, transparent 2rem); border-radius: var(--radius); }
+  </style>
+</head>
+<body>
+  <header class="header"><h1>Acme Admin</h1><span>Welcome, Sam</span></header>
+  <aside class="sidebar">
+    <ul>
+      <li class="active">Overview</li><li>Users</li><li>Orders</li><li>Reports</li><li>Settings</li>
+    </ul>
+  </aside>
+  <main class="main">
+    <div class="grid">
+      <div class="card"><h3>Revenue</h3><div class="value">$48,200</div><span class="badge ok">+12%</span></div>
+      <div class="card"><h3>Users</h3><div class="value">3,421</div><span class="badge ok">+4%</span></div>
+      <div class="card"><h3>Churn</h3><div class="value">2.1%</div><span class="badge">High</span></div>
+      <div class="card"><h3>Tickets</h3><div class="value">87</div><span class="badge">Urgent</span></div>
+    </div>
+    <h2 class="section-title">Recent orders</h2>
+    <table>
+      <thead><tr><th>Order</th><th>Customer</th><th>Total</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>#1001</td><td>Alice</td><td>$120.00</td><td><span class="badge ok">Paid</span></td></tr>
+        <tr><td>#1002</td><td>Bob</td><td>$75.50</td><td><span class="badge">Failed</span></td></tr>
+        <tr><td>#1003</td><td>Carol</td><td>$310.00</td><td><span class="badge ok">Paid</span></td></tr>
+        <tr><td>#1004</td><td>Dave</td><td>$42.25</td><td><span class="badge ok">Paid</span></td></tr>
+        <tr><td>#1005</td><td>Eve</td><td>$99.99</td><td><span class="badge">Refunded</span></td></tr>
+      </tbody>
+    </table>
+    <h2 class="section-title">Activity</h2>
+    <div class="filler"></div>
+  </main>
+</body>
+</html>

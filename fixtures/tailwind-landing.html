@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Launchly - Ship faster</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="bg-white text-slate-800">
+  <nav class="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-slate-200">
+    <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+      <a href="#" class="text-xl font-extrabold text-indigo-600">Launchly</a>
+      <ul id="menu" class="hidden md:flex gap-8 text-sm font-semibold">
+        <li><a href="#features" class="hover:text-indigo-600">Features</a></li>
+        <li><a href="#pricing" class="hover:text-indigo-600">Pricing</a></li>
+        <li><a href="#faq" class="hover:text-indigo-600">FAQ</a></li>
+      </ul>
+      <button id="menu-toggle" class="md:hidden p-2 rounded border border-slate-300" aria-label="Toggle menu">Menu</button>
+    </div>
+  </nav>
+
+  <section class="hero bg-gradient-to-br from-indigo-50 to-white py-24 px-4 text-center">
+    <h1 class="text-5xl md:text-6xl font-extrabold tracking-tight mb-6">Build and launch in minutes</h1>
+    <p class="max-w-2xl mx-auto text-lg text-slate-600 mb-8">Launchly gives your team everything needed to ship polished products without the busywork.</p>
+    <button class="cta-btn bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-8 py-3 rounded-lg shadow-lg">Get started free</button>
+  </section>
+
+  <section id="features" class="max-w-6xl mx-auto px-4 py-20 grid md:grid-cols-3 gap-8">
+    <div class="p-6 rounded-xl bg-slate-50"><h3 class="font-semibold text-lg mb-2">Fast</h3><p class="text-slate-600">Optimized builds and instant previews.</p></div>
+    <div class="p-6 rounded-xl bg-slate-50"><h3 class="font-semibold text-lg mb-2">Secure</h3><p class="text-slate-600">Enterprise-grade security by default.</p></div>
+    <div class="p-6 rounded-xl bg-slate-50"><h3 class="font-semibold text-lg mb-2">Scalable</h3><p class="text-slate-600">Grow from one user to one million.</p></div>
+  </section>
+
+  <section id="pricing" class="bg-slate-900 text-white py-20 px-4">
+    <h2 class="text-3xl font-extrabold text-center mb-12">Simple pricing</h2>
+    <div class="max-w-5xl mx-auto grid md:grid-cols-3 gap-6">
+      <div class="card bg-slate-800 rounded-2xl p-8">
+        <h3 class="text-xl font-semibold">Starter</h3>
+        <p class="text-4xl font-extrabold my-4">$9<span class="text-base font-normal text-slate-400">/mo</span></p>
+        <ul class="space-y-2 text-slate-300 mb-6"><li>1 project</li><li>Basic analytics</li><li>Email support</li></ul>
+        <button class="w-full py-2 rounded-lg bg-slate-700 hover:bg-slate-600">Choose Starter</button>
+      </div>
+      <div class="card bg-indigo-600 rounded-2xl p-8 ring-4 ring-indigo-300">
+        <h3 class="text-xl font-semibold">Pro</h3>
+        <p class="text-4xl font-extrabold my-4">$29<span class="text-base font-normal text-indigo-200">/mo</span></p>
+        <ul class="space-y-2 text-indigo-100 mb-6"><li>10 projects</li><li>Advanced analytics</li><li>Priority support</li></ul>
+        <button class="w-full py-2 rounded-lg bg-white text-indigo-700 font-semibold">Choose Pro</button>
+      </div>
+      <div class="card bg-slate-800 rounded-2xl p-8">
+        <h3 class="text-xl font-semibold">Enterprise</h3>
+        <p class="text-4xl font-extrabold my-4">$99<span class="text-base font-normal text-slate-400">/mo</span></p>
+        <ul class="space-y-2 text-slate-300 mb-6"><li>Unlimited projects</li><li>Custom SLAs</li><li>Dedicated manager</li></ul>
+        <button class="w-full py-2 rounded-lg bg-slate-700 hover:bg-slate-600">Contact sales</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq" class="max-w-3xl mx-auto px-4 py-20">
+    <h2 class="text-3xl font-extrabold text-center mb-10">Frequently asked questions</h2>
+    <div class="space-y-6">
+      <div><h3 class="font-semibold text-lg">Is there a free trial?</h3><p class="text-slate-600 mt-1">Yes, 14 days with no credit card required.</p></div>
+      <div><h3 class="font-semibold text-lg">Can I cancel anytime?</h3><p class="text-slate-600 mt-1">Absolutely. Cancel from your account settings.</p></div>
+      <div><h3 class="font-semibold text-lg">Do you offer refunds?</h3><p class="text-slate-600 mt-1">Full refunds within 30 days of purchase.</p></div>
+      <div><h3 class="font-semibold text-lg">Which integrations exist?</h3><p class="text-slate-600 mt-1">Slack, GitHub, Jira, Figma and many more.</p></div>
+    </div>
+  </section>
+
+  <footer class="bg-slate-100 border-t border-slate-200 py-10 px-4 text-center">
+    <div class="social-links flex justify-center gap-6 mb-4 text-indigo-600 font-semibold">
+      <a href="#">Twitter</a><a href="#">GitHub</a><a href="#">LinkedIn</a>
+    </div>
+    <p class="text-sm text-slate-500">&copy; 2026 Launchly. All rights reserved.</p>
+  </footer>
+
+  <script>
+    document.getElementById('menu-toggle').addEventListener('click', function () {
+      var m = document.getElementById('menu');
+      m.classList.toggle('hidden');
+      m.classList.toggle('flex');
+      m.classList.toggle('flex-col');
+    });
+  </script>
+</body>
+</html>

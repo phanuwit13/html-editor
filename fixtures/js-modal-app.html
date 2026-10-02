@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JS Modal App</title>
+  <style>
+    body { font-family: Helvetica, Arial, sans-serif; max-width: 640px; margin: 2rem auto; padding: 0 1rem; color: #222; }
+    button { padding: 0.5rem 1rem; border: 0; border-radius: 6px; background: #4f46e5; color: #fff; cursor: pointer; margin-right: 0.5rem; }
+    button:hover { background: #4338ca; }
+    .toolbar { margin-bottom: 1.5rem; }
+    .tabs { display: flex; border-bottom: 2px solid #e5e7eb; }
+    .tab { background: none; color: #555; border-radius: 0; margin: 0; }
+    .tab.active { color: #4f46e5; border-bottom: 2px solid #4f46e5; }
+    .tab-panel { display: none; padding: 1rem 0; }
+    .tab-panel.active { display: block; }
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
+    .modal.open { display: flex; }
+    .modal-box { background: #fff; padding: 1.5rem; border-radius: 10px; min-width: 18rem; }
+    form { display: grid; gap: 0.75rem; margin-top: 1rem; }
+    input { padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; }
+    #count { font-weight: bold; font-size: 1.25rem; }
+  </style>
+</head>
+<body>
+  <h1>Modal App</h1>
+  <div class="toolbar">
+    <button id="open-static">Open static modal</button>
+    <button id="open-dynamic">Open dynamic modal</button>
+    <button id="counter-btn">Clicked <span id="count">0</span> times</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="one">Overview</button>
+    <button class="tab" data-tab="two">Details</button>
+    <button class="tab" data-tab="three">Settings</button>
+  </div>
+  <div class="tab-panel active" id="one"><p>Overview content goes here.</p></div>
+  <div class="tab-panel" id="two"><p>Details content goes here.</p></div>
+  <div class="tab-panel" id="three"><p>Settings content goes here.</p></div>
+
+  <form id="contact-form">
+    <h2>Contact</h2>
+    <input type="text" name="name" placeholder="Your name" required>
+    <input type="email" name="email" placeholder="Email" required>
+    <button type="submit">Send</button>
+  </form>
+
+  <div class="modal" id="static-modal">
+    <div class="modal-box">
+      <h3>Static modal</h3>
+      <p>This modal exists in the HTML and is toggled by class.</p>
+      <button class="close-static">Close</button>
+    </div>
+  </div>
+
+  <script>
+    var staticModal = document.getElementById('static-modal');
+    document.getElementById('open-static').addEventListener('click', function () { staticModal.classList.add('open'); });
+    document.querySelector('.close-static').addEventListener('click', function () { staticModal.classList.remove('open'); });
+
+    document.getElementById('open-dynamic').addEventListener('click', function () {
+      var overlay = document.createElement('div');
+      overlay.className = 'modal open';
+      overlay.id = 'dynamic-modal';
+      overlay.innerHTML = '<div class="modal-box"><h3>Dynamic modal</h3><p>Created at runtime.</p><button class="close-dynamic">Close</button></div>';
+      overlay.querySelector('.close-dynamic').addEventListener('click', function () { overlay.remove(); });
+      document.body.appendChild(overlay);
+    });
+
+    document.querySelectorAll('.tab').forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        document.querySelectorAll('.tab, .tab-panel').forEach(function (el) { el.classList.remove('active'); });
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab).classList.add('active');
+      });
+    });
+
+    document.getElementById('contact-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      alert('Thanks, ' + this.elements.name.value + '!');
+    });
+
+    var n = 0;
+    document.getElementById('counter-btn').addEventListener('click', function () {
+      document.getElementById('count').textContent = ++n;
+    });
+  </script>
+</body>
+</html>
