@@ -43,6 +43,10 @@ export function handleShortcut(e: KeyboardEvent): boolean {
     s.redo()
     return true
   }
+  if (mod && key === 'd' && s.mode === 'edit' && s.selectedEl) {
+    s.duplicateSelected()
+    return true
+  }
   if (mod || e.altKey) return false
 
   if (key === 'e') {

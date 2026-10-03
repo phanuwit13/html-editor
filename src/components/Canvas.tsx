@@ -19,6 +19,10 @@ export default function Canvas() {
       onTextCommit: (el, before, after, html) => s().setText(el, before, after, html, true),
       onKey: handleShortcut,
       onNotice: (t) => s().notify(t),
+      onResize: (el, size, done) => {
+        if (done || s().selectedEl !== el) return
+        s().setStyle(size, 'resize')
+      },
     })
     return () => canvas.detach()
   }, [])

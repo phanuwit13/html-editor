@@ -36,7 +36,27 @@ const GROUPS: { name: string; props: string[] }[] = [
 /** Build the list of human-readable changes, selectors resolved against the original document. */
 export function buildChangeList(preparedHtml: string, patches: Patch[]): ChangeItem[] {
   const original = new DOMParser().parseFromString(preparedHtml, 'text/html')
+  // Elements inside duplicates don't exist in the original → name them after their source element
+  const copies = new Map<string, string>()
+  for (const p of patches) {
+    if (p.kind !== 'insert') continue
+    const src = findByTwId(original, p.sourceTwId)
+    const tpl = original.createElement('template')
+    tpl.innerHTML = p.outerHTML
+    const root = tpl.content.firstElementChild
+    if (!root) continue
+    const cloneNodes = [root, ...Array.from(root.querySelectorAll('*'))]
+    const srcNodes = src ? [src, ...Array.from(src.querySelectorAll('*'))] : []
+    const srcBase = copies.get(p.sourceTwId)
+    cloneNodes.forEach((n, i) => {
+      const id = n.getAttribute(TW_ATTR)
+      if (!id) return
+      const s = srcNodes[i]
+      copies.set(id, i === 0 ? `${srcBase ?? (s ? readableSelector(s) : 'element')} (copy)` : s ? `${readableSelector(s)} (in copy)` : `${srcBase ?? 'element'} (in copy)`)
+    })
+  }
   const selectorFor = (twId: string) => {
+    if (copies.has(twId)) return copies.get(twId)!
     const el = twId === 'tw-0' ? original.body : findByTwId(original, twId)
     return el ? readableSelector(el) : `[element ${twId}]`
   }
@@ -73,6 +93,8 @@ export function buildChangeList(preparedHtml: string, patches: Patch[]): ChangeI
       items.push({ selector, change: `text: "${truncate(b)}" → "${truncate(a)}"${note}` })
     } else if (p.kind === 'attr') {
       items.push({ selector, change: `attribute ${p.name}: ${JSON.stringify(p.before)} → ${JSON.stringify(p.after)}` })
+    } else if (p.kind === 'insert') {
+      items.push({ selector: selectorFor(p.sourceTwId), change: 'duplicated (copy inserted right after it)' })
     } else {
       items.push({ selector, change: 'removed' })
     }

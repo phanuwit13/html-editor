@@ -23,6 +23,14 @@ Sample files to try are in `fixtures/`.
 - **Hash routing.** A small preview-only shim lets `history.pushState/replaceState('#/route')` work inside the `srcdoc` iframe. The shim is stripped on export.
 - **Edits are inline styles.** The comment block and "Copy change list" ask your AI tool to move them into proper classes (e.g. Tailwind).
 
+## Panels
+
+- **Layers** (left, toggle in the toolbar): the DOM tree. Click a row to select, hover to highlight. Rows in italics with an amber dot are rendered by script.
+- **Inspector** (right): typography, fill, spacing, size, border, effects. Drag a field's label to scrub its value. Arrow keys change it by ±1 (Shift ±10).
+- **Breadcrumb** (bottom bar): the ancestors of the selection. Click one to select it.
+- **Resize**: drag a corner handle of the selection box to set `width`/`height`. Hold Shift to keep the aspect ratio.
+- The open file and its edit history are kept in `sessionStorage`, so a refresh doesn't lose work. Closing the file or the tab clears them.
+
 ## Security note
 
 The preview iframe uses `sandbox="allow-scripts allow-same-origin …"`, so the editor can reach into the page directly. This also means **scripts in the file you open can access the editor page**. That's acceptable because you only open your own files, and the editor holds no data worth stealing. Don't open HTML files you don't trust.
@@ -37,4 +45,5 @@ The preview iframe uses `sandbox="allow-scripts allow-same-origin …"`, so the 
 | `Delete` / `Backspace` | Delete selected element |
 | `Enter` | Edit text of selected element |
 | `⇧Enter` | Select parent |
+| `⌘/Ctrl+D` | Duplicate selected element |
 | `⌘/Ctrl+E` | Export |

@@ -10,7 +10,9 @@ const OVERLAY_CSS = `
 #__tw_padding{border-style:solid;border-color:rgba(147,196,125,.45)}
 #__tw_label{position:fixed;top:0;left:0;margin:0;pointer-events:none;z-index:2147483647;display:none;background:#0d99ff;color:#fff;font:500 11px/16px Inter,system-ui,sans-serif;padding:0 5px;border-radius:2px;white-space:nowrap;letter-spacing:0;text-transform:none}
 #__tw_label span{opacity:.75;margin-left:6px}
-#__tw_select i{position:absolute;width:6px;height:6px;background:#fff;border:1px solid #0d99ff;box-sizing:border-box}
+#__tw_select i{position:absolute;width:8px;height:8px;background:#fff;border:1px solid #0d99ff;box-sizing:border-box;pointer-events:auto}
+html.__tw_editing #__tw_select i[data-tw-handle=nw],html.__tw_editing #__tw_select i[data-tw-handle=se]{cursor:nwse-resize!important}
+html.__tw_editing #__tw_select i[data-tw-handle=ne],html.__tw_editing #__tw_select i[data-tw-handle=sw]{cursor:nesw-resize!important}
 html.__tw_editing,html.__tw_editing *{cursor:default!important}
 html.__tw_editing [contenteditable=true]{cursor:text!important;outline:2px dashed #0d99ff!important;outline-offset:2px}
 `

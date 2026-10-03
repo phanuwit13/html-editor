@@ -25,6 +25,8 @@ export interface EditorState {
   /** live element (may have no twId when created by the page's script) */
   selectedEl: HTMLElement | null
   hoveredTwId: string | null
+  hoveredEl: HTMLElement | null
+  showLayers: boolean
   patches: Patch[]
   undoStack: HistoryEntry[]
   redoStack: HistoryEntry[]
@@ -39,11 +41,13 @@ export interface EditorState {
   setMode: (mode: Mode) => void
   toggleMode: () => void
   select: (el: HTMLElement | null) => void
-  setHovered: (el: HTMLElement | null) => void
+  setHovered: (el: HTMLElement | null, fromPanel?: boolean) => void
+  toggleLayers: () => void
   selectParent: () => void
   setStyle: (props: Record<string, string>, coalesceKey?: string) => void
   setText: (el: HTMLElement, before: string, after: string, html: boolean, alreadyApplied?: boolean, coalesceKey?: string) => void
   removeSelected: () => void
+  duplicateSelected: () => void
   toggleHidden: () => void
   undo: () => void
   redo: () => void
@@ -51,6 +55,7 @@ export interface EditorState {
   onCanvasLoad: () => void
   setViewport: (v: Viewport) => void
   notify: (text: string) => void
+  restoreHistory: (undoStack: HistoryEntry[], redoStack: HistoryEntry[], viewportWidth: Viewport) => void
 }
 
 const twIdOf = (el: Element | null) => el?.getAttribute(TW_ATTR) ?? null
@@ -73,6 +78,7 @@ const initial = {
   selectedTwId: null,
   selectedEl: null,
   hoveredTwId: null,
+  hoveredEl: null,
   patches: [] as Patch[],
   undoStack: [] as HistoryEntry[],
   redoStack: [] as HistoryEntry[],
@@ -112,6 +118,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
     ...initial,
     viewportWidth: 'full',
     iframeKey: 0,
+    showLayers: true,
 
     loadFile: (name, html) => {
       const { preparedHtml, isFragment } = prepareHtml(html)
@@ -137,7 +144,11 @@ export const useEditorStore = create<EditorState>((set, get) => {
       canvas.setSelected(el)
       set({ selectedEl: el, selectedTwId: twIdOf(el) })
     },
-    setHovered: (el) => set({ hoveredTwId: twIdOf(el) }),
+    setHovered: (el, fromPanel) => {
+      if (fromPanel) canvas.setHovered(el)
+      set({ hoveredTwId: twIdOf(el), hoveredEl: el })
+    },
+    toggleLayers: () => set((s) => ({ showLayers: !s.showLayers })),
     selectParent: () => {
       const el = get().selectedEl
       const parent = el?.parentElement
@@ -203,6 +214,32 @@ export const useEditorStore = create<EditorState>((set, get) => {
       commit([{ ...patch, id: newPatchId() }])
     },
 
+    duplicateSelected: () => {
+      const { selectedEl: el, selectedTwId: twId } = get()
+      if (!el) return
+      if (!twId) return get().notify('Rendered by script — duplicate it in the JS source instead')
+      const parent = el.parentElement
+      const parentTwId = twIdOf(parent)
+      if (!parent || !parentTwId || el.tagName === 'BODY') return get().notify('This element cannot be duplicated')
+      const clone = el.cloneNode(true) as HTMLElement
+      clone.removeAttribute('contenteditable')
+      // fresh ids for the copy and everything inside it, so later edits target the copy only
+      const stamp = Date.now().toString(36)
+      ;[clone, ...Array.from(clone.querySelectorAll('*'))].forEach((n, i) => n.setAttribute(TW_ATTR, `tw-c${stamp}${i.toString(36)}`))
+      const patch: Patch = {
+        id: newPatchId(),
+        twId: clone.getAttribute(TW_ATTR)!,
+        kind: 'insert',
+        outerHTML: clone.outerHTML,
+        parentTwId,
+        index: Array.from(parent.children).indexOf(el) + 1,
+        sourceTwId: twId,
+      }
+      applyPatch(el.ownerDocument, patch)
+      commit([patch])
+      get().select(findByTwId(el.ownerDocument, patch.twId))
+    },
+
     toggleHidden: () => {
       const el = get().selectedEl
       if (!el) return
@@ -249,6 +286,9 @@ export const useEditorStore = create<EditorState>((set, get) => {
     setViewport: (viewportWidth) => set({ viewportWidth }),
 
     notify: (text) => set({ notice: { text, id: Date.now() } }),
+
+    /** sessionStorage restore — the iframe's onCanvasLoad re-applies the patches. */
+    restoreHistory: (undoStack, redoStack, viewportWidth) => set({ undoStack, redoStack, patches: derive(undoStack), viewportWidth }),
   }
 })
 

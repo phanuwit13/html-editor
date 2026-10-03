@@ -296,12 +296,12 @@ src/
 
 ### Phase 2 — ให้รู้สึกเหมือน Figma (สัปดาห์ที่ 2)
 - [x] Number input แบบ scrub + ลูกศร ±1/±10
-- [ ] Layers panel (DOM tree ย่อ/ขยาย, click เพื่อ select, sync กับ canvas)
+- [x] Layers panel (DOM tree ย่อ/ขยาย, click เพื่อ select, sync กับ canvas)
 - [x] Viewport presets 375 / 768 / 1280 / full
-- [ ] Resize handles ที่มุมของ selection → width/height
-- [ ] Duplicate element
+- [x] Resize handles ที่มุมของ selection → width/height
+- [x] Duplicate element
 - [x] เลือก parent ด้วย `Shift+Enter` / breadcrumb ใต้ Canvas
-- [ ] จำไฟล์ล่าสุดใน `sessionStorage` กัน refresh แล้วหาย (ไม่ใช่การเก็บโปรเจกต์)
+- [x] จำไฟล์ล่าสุดใน `sessionStorage` กัน refresh แล้วหาย (ไม่ใช่การเก็บโปรเจกต์)
 
 ### Phase 3 — ถ้ายังอยากต่อ (ไม่สัญญา)
 - [ ] ลากย้ายตำแหน่ง element ภายใน parent เดียวกัน (reorder)

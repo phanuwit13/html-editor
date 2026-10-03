@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Check, ClipboardCopy, Download, FileCode2, ListChecks, Monitor, MousePointer2, Play, Redo2, RotateCcw, Smartphone, Tablet, Undo2, X, Maximize } from 'lucide-react'
+import { Check, ClipboardCopy, PanelLeft, Download, FileCode2, ListChecks, Monitor, MousePointer2, Play, Redo2, RotateCcw, Smartphone, Tablet, Undo2, X, Maximize } from 'lucide-react'
 import { useEditorStore, type Viewport } from '../store/useEditorStore'
 import { buildChangeList, buildPrompt } from '../editor/exporter'
 import { exportCurrent } from '../editor/shortcuts'
@@ -36,7 +36,8 @@ export default function Toolbar() {
   const canUndo = useEditorStore((s) => s.undoStack.length > 0)
   const canRedo = useEditorStore((s) => s.redoStack.length > 0)
   const viewport = useEditorStore((s) => s.viewportWidth)
-  const { setMode, undo, redo, resetPreview, setViewport, closeFile, notify } = useEditorStore.getState()
+  const showLayers = useEditorStore((s) => s.showLayers)
+  const { setMode, undo, redo, resetPreview, setViewport, closeFile, notify, toggleLayers } = useEditorStore.getState()
 
   const [showChanges, setShowChanges] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -71,6 +72,9 @@ export default function Toolbar() {
   return (
     <header className="flex h-11 shrink-0 items-center gap-2 border-b border-neutral-200 bg-white px-2">
       <div className="flex min-w-0 flex-1 items-center gap-2">
+        <IconButton title="Layers panel" onClick={toggleLayers} active={showLayers}>
+          <PanelLeft className="size-4" />
+        </IconButton>
         <div className="flex size-7 items-center justify-center rounded-md bg-sky-500 text-white">
           <FileCode2 className="size-4" />
         </div>

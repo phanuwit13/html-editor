@@ -30,8 +30,11 @@ export type StylePatch = RuntimeTarget & {
 export type TextPatch = RuntimeTarget & { id: string; kind: 'text'; before: string; after: string; html?: boolean }
 export type AttrPatch = { id: string; twId: string; kind: 'attr'; name: string; before: string | null; after: string | null }
 export type RemovePatch = { id: string; twId: string; kind: 'remove'; outerHTML: string; parentTwId: string; index: number }
+/** Duplicate: `outerHTML` (with fresh data-tw-ids, root = twId) inserted at `index` of the parent. */
+export type InsertPatch = { id: string; twId: string; kind: 'insert'; outerHTML: string; parentTwId: string; index: number; sourceTwId: string }
 
-export type Patch = StylePatch | TextPatch | AttrPatch | RemovePatch
+export type Patch = StylePatch | TextPatch | AttrPatch | RemovePatch | InsertPatch
+type StructuralPatch = RemovePatch | InsertPatch
 export type NewPatch = Patch extends infer P ? (P extends Patch ? Omit<P, 'id'> : never) : never
 
 let seq = 0
@@ -96,6 +99,10 @@ export function applyPatch(doc: Document, patch: Patch) {
     }
     return
   }
+  if (patch.kind === 'insert') {
+    if (!findByTwId(doc, patch.twId)) insertHtml(doc, patch.parentTwId, patch.index, patch.outerHTML)
+    return
+  }
   const el = findByTwId(doc, patch.twId)
   if (!el) return
   switch (patch.kind) {
@@ -118,22 +125,27 @@ export function applyPatch(doc: Document, patch: Patch) {
   }
 }
 
+function parentOf(doc: Document, parentTwId: string) {
+  return findByTwId(doc, parentTwId) ?? (parentTwId === 'tw-0' ? doc.body : null)
+}
+
+function insertHtml(doc: Document, parentTwId: string, index: number, html: string) {
+  const parent = parentOf(doc, parentTwId)
+  if (!parent) return
+  const tpl = doc.createElement('template')
+  tpl.innerHTML = html
+  const node = tpl.content.firstElementChild
+  if (node) parent.insertBefore(node, parent.children[index] ?? null)
+}
+
 /** Undo a patch on the live document. */
 export function revertPatch(doc: Document, patch: Patch) {
-  if (patch.kind === 'remove') {
-    const parent = findByTwId(doc, patch.parentTwId) ?? (patch.parentTwId === 'tw-0' ? doc.body : null)
-    if (!parent) return
-    const tpl = doc.createElement('template')
-    tpl.innerHTML = patch.outerHTML
-    const node = tpl.content.firstElementChild
-    if (!node) return
-    parent.insertBefore(node, parent.children[patch.index] ?? null)
-    return
-  }
+  if (patch.kind === 'remove') return insertHtml(doc, patch.parentTwId, patch.index, patch.outerHTML)
+  if (patch.kind === 'insert') return findByTwId(doc, patch.twId)?.remove()
   applyPatch(doc, invertPatch(patch))
 }
 
-export function invertPatch<P extends Exclude<Patch, RemovePatch>>(patch: P): P {
+export function invertPatch<P extends Exclude<Patch, StructuralPatch>>(patch: P): P {
   if (patch.kind === 'style') {
     return {
       ...patch,
@@ -155,7 +167,7 @@ function sameTarget(a: Patch, b: Patch) {
 }
 
 function isNoop(p: Patch) {
-  if (p.kind === 'remove') return false
+  if (p.kind === 'remove' || p.kind === 'insert') return false
   if (p.kind === 'style') return p.before === p.after && !p.important === (p.beforePriority !== 'important')
   return p.before === p.after
 }
@@ -165,10 +177,10 @@ function isNoop(p: Patch) {
  * into one patch (first `before`, latest `after`). Edits that cancel out are dropped.
  */
 export function mergePatch(list: Patch[], patch: Patch): Patch[] {
-  if (patch.kind !== 'remove') {
+  if (patch.kind !== 'remove' && patch.kind !== 'insert') {
     const i = list.findIndex((p) => sameTarget(p, patch))
     if (i !== -1) {
-      const prev = list[i] as Exclude<Patch, RemovePatch>
+      const prev = list[i] as Exclude<Patch, StructuralPatch>
       const merged = { ...patch, id: prev.id, before: prev.before } as Patch
       if (merged.kind === 'style' && prev.kind === 'style') {
         merged.beforePriority = prev.beforePriority

@@ -7,7 +7,11 @@ export interface CanvasCallbacks {
   /** return true when the key was handled (it will be preventDefault-ed) */
   onKey: (e: KeyboardEvent) => boolean
   onNotice: (text: string) => void
+  /** dragging a selection handle; `done` on pointerup */
+  onResize: (el: HTMLElement, size: { width?: string; height?: string }, done: boolean) => void
 }
+
+type Corner = 'nw' | 'ne' | 'sw' | 'se'
 
 const BLOCKED_EVENTS = ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'click', 'dblclick', 'auxclick', 'contextmenu', 'submit', 'touchstart', 'touchend', 'dragstart'] as const
 
@@ -99,6 +103,18 @@ export class CanvasController {
     else this.stopEdit()
   }
 
+  /** Hover coming from outside the canvas (Layers panel). */
+  setHovered(el: HTMLElement | null) {
+    this.hovered = el
+  }
+
+  /** Scroll the canvas so the element is visible (used when selecting from the Layers panel). */
+  reveal(el: HTMLElement) {
+    const r = el.getBoundingClientRect()
+    const h = this.win?.innerHeight ?? 0
+    if (r.bottom < 0 || r.top > h) el.scrollIntoView({ block: 'center' })
+  }
+
   setSelected(el: HTMLElement | null) {
     if (this.editing && this.editing.el !== el) this.commitText()
     this.selected = el
@@ -116,6 +132,13 @@ export class CanvasController {
     doc.documentElement.classList.add('__tw_editing')
 
     const block = (e: Event) => {
+      const handle = (e.target as HTMLElement | null)?.closest?.('[data-tw-handle]') as HTMLElement | null
+      if (handle || this.resizing) {
+        e.preventDefault()
+        e.stopImmediatePropagation()
+        if (e.type === 'pointerdown' && handle && this.selected) this.startResize(e as PointerEvent, handle.dataset.twHandle as Corner)
+        return
+      }
       if (this.editing && this.editing.el.contains(e.target as Node)) return // let caret placement work
       e.preventDefault()
       e.stopImmediatePropagation()
@@ -169,10 +192,58 @@ export class CanvasController {
     this.hideOverlay()
   }
 
+  // ---------------------------------------------------------------- resize handles
+
+  private resizing = false
+
+  private startResize(e: PointerEvent, corner: Corner) {
+    const el = this.selected
+    const win = this.win
+    if (!el || !win) return
+    const cs = win.getComputedStyle(el)
+    const rect = el.getBoundingClientRect()
+    // computed width/height respect box-sizing → writing them back keeps the size identical
+    const w0 = cs.width.endsWith('px') ? parseFloat(cs.width) : rect.width
+    const h0 = cs.height.endsWith('px') ? parseFloat(cs.height) : rect.height
+    const x0 = e.clientX
+    const y0 = e.clientY
+    const sx = corner.includes('e') ? 1 : -1
+    const sy = corner.includes('s') ? 1 : -1
+    this.resizing = true
+    if (cs.display === 'inline') this.cb?.onNotice('Inline element — set display to block/inline-block for width/height to apply')
+
+    const move = (ev: PointerEvent) => {
+      ev.preventDefault()
+      ev.stopImmediatePropagation()
+      const dx = (ev.clientX - x0) * sx
+      const dy = (ev.clientY - y0) * sy
+      let w = Math.max(1, Math.round(w0 + dx))
+      let h = Math.max(1, Math.round(h0 + dy))
+      if (ev.shiftKey && w0 && h0) {
+        // keep aspect ratio
+        const k = Math.max(w / w0, h / h0)
+        w = Math.round(w0 * k)
+        h = Math.round(h0 * k)
+      }
+      this.cb?.onResize(el, { width: `${w}px`, height: `${h}px` }, false)
+    }
+    const up = (ev: PointerEvent) => {
+      ev.preventDefault()
+      ev.stopImmediatePropagation()
+      win.removeEventListener('pointermove', move, true)
+      win.removeEventListener('pointerup', up, true)
+      this.cb?.onResize(el, {}, true)
+      // swallow the click that follows pointerup
+      setTimeout(() => (this.resizing = false), 0)
+    }
+    win.addEventListener('pointermove', move, true)
+    win.addEventListener('pointerup', up, true)
+  }
+
   private pick(target: EventTarget | null): HTMLElement | null {
     let el = target as HTMLElement | null
     if (el && el.nodeType !== 1) el = (el as unknown as Node).parentElement
-    if (!el || el.tagName === 'HTML' || el.id?.startsWith('__tw_')) return null
+    if (!el || el.tagName === 'HTML' || el.closest?.('[id^="__tw_"]')) return null
     // SVG internals → select the <svg> itself
     const svg = el.closest?.('svg')
     if (svg) el = svg as unknown as HTMLElement
@@ -277,7 +348,8 @@ export class CanvasController {
       if (id === '__tw_select') {
         for (const [x, y] of [[0, 0], [1, 0], [0, 1], [1, 1]]) {
           const h = doc.createElement('i')
-          h.style.cssText = `${x ? 'right' : 'left'}:-4px;${y ? 'bottom' : 'top'}:-4px`
+          h.dataset.twHandle = `${y ? 's' : 'n'}${x ? 'e' : 'w'}`
+          h.style.cssText = `${x ? 'right' : 'left'}:-5px;${y ? 'bottom' : 'top'}:-5px`
           d.appendChild(h)
         }
       }

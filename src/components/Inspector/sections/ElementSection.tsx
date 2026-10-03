@@ -1,4 +1,4 @@
-import { ChevronRight, Eye, EyeOff, Trash2 } from 'lucide-react'
+import { ChevronRight, Copy, Eye, EyeOff, Trash2 } from 'lucide-react'
 import { shortLabel } from '../../../editor/selector'
 import type { InspectorModel } from '../../../editor/styleReader'
 import { useEditorStore } from '../../../store/useEditorStore'
@@ -50,7 +50,7 @@ export default function ElementSection({ el, model }: Props) {
         ))}
       </div>
 
-      <div className="grid grid-cols-2 gap-1.5">
+      <div className="grid grid-cols-3 gap-1.5">
         <button
           type="button"
           className="flex h-7 items-center justify-center gap-1.5 rounded bg-neutral-100 text-[11px] text-neutral-700 hover:bg-neutral-200"
@@ -58,6 +58,16 @@ export default function ElementSection({ el, model }: Props) {
         >
           {hidden ? <Eye className="size-3.5" /> : <EyeOff className="size-3.5" />}
           {hidden ? 'Show' : 'Hide'}
+        </button>
+        <button
+          type="button"
+          disabled={isBody}
+          title="Duplicate (⌘D)"
+          className="flex h-7 items-center justify-center gap-1.5 rounded bg-neutral-100 text-[11px] text-neutral-700 hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-40"
+          onClick={() => useEditorStore.getState().duplicateSelected()}
+        >
+          <Copy className="size-3.5" />
+          Duplicate
         </button>
         <button
           type="button"
